@@ -109,7 +109,7 @@ export class AnnotateScmSlugEntityProcessor implements CatalogProcessor_2 {
   preProcessEntity(entity: Entity, location: LocationSpec_2): Promise<Entity>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class BuiltinKindsEntityProcessor implements CatalogProcessor_2 {
   // (undocumented)
   getProcessorName(): string;

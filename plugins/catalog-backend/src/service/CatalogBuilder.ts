@@ -43,7 +43,6 @@ import {
 } from '@backstage/plugin-catalog-node';
 import {
   AnnotateLocationEntityProcessor,
-  BuiltinKindsEntityProcessor,
   CodeOwnersProcessor,
   FileReaderProcessor,
   PlaceholderProcessor,
@@ -102,6 +101,7 @@ import { DefaultProviderDatabase } from '../database/DefaultProviderDatabase';
 import { DefaultCatalogDatabase } from '../database/DefaultCatalogDatabase';
 import { EventBroker } from '@backstage/plugin-events-node';
 import { durationToMilliseconds } from '@backstage/types';
+import { SystemEntityModelProcessor } from '@backstage/plugin-catalog-backend-module-system-entity-model';
 
 /**
  * This is a duplicate of the alpha `CatalogPermissionRule` type, for use in the stable API.
@@ -639,17 +639,17 @@ export class CatalogBuilder {
       }),
     ];
 
-    const builtinKindsEntityProcessor = new BuiltinKindsEntityProcessor();
+    const systemEntityModelProcessor = new SystemEntityModelProcessor();
     // If the user adds a processor named 'BuiltinKindsEntityProcessor',
     //   skip inclusion of the catalog-backend version.
     if (
       !this.processors.some(
         processor =>
           processor.getProcessorName() ===
-          builtinKindsEntityProcessor.getProcessorName(),
+          systemEntityModelProcessor.getProcessorName(),
       )
     ) {
-      processors.push(builtinKindsEntityProcessor);
+      processors.push(systemEntityModelProcessor);
     }
 
     // These are only added unless the user replaced them all

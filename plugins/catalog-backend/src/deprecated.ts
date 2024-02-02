@@ -40,6 +40,8 @@ import {
 } from '@backstage/plugin-catalog-node';
 import { type LocationSpec as _LocationSpec } from '@backstage/plugin-catalog-common';
 
+export { BuiltinKindsEntityProcessor } from './modules';
+
 /**
  * @public
  * @deprecated import from `@backstage/plugin-catalog-node` instead

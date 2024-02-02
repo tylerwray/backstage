@@ -5661,7 +5661,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@backstage/plugin-catalog-backend-module-system-entity-model@^0.0.0, @backstage/plugin-catalog-backend-module-system-entity-model@workspace:plugins/catalog-backend-module-system-entity-model":
+"@backstage/plugin-catalog-backend-module-system-entity-model@^0.0.0, @backstage/plugin-catalog-backend-module-system-entity-model@workspace:^, @backstage/plugin-catalog-backend-module-system-entity-model@workspace:plugins/catalog-backend-module-system-entity-model":
   version: 0.0.0-use.local
   resolution: "@backstage/plugin-catalog-backend-module-system-entity-model@workspace:plugins/catalog-backend-module-system-entity-model"
   dependencies:
@@ -5704,6 +5704,7 @@ __metadata:
     "@backstage/errors": "workspace:^"
     "@backstage/integration": "workspace:^"
     "@backstage/plugin-auth-node": "workspace:^"
+    "@backstage/plugin-catalog-backend-module-system-entity-model": "workspace:^"
     "@backstage/plugin-catalog-common": "workspace:^"
     "@backstage/plugin-catalog-node": "workspace:^"
     "@backstage/plugin-events-node": "workspace:^"
@@ -26831,6 +26832,7 @@ __metadata:
     "@backstage/plugin-catalog-backend-module-backstage-openapi": "workspace:^"
     "@backstage/plugin-catalog-backend-module-openapi": "workspace:^"
     "@backstage/plugin-catalog-backend-module-scaffolder-entity-model": "workspace:^"
+    "@backstage/plugin-catalog-backend-module-system-entity-model": "workspace:^"
     "@backstage/plugin-catalog-backend-module-unprocessed": "workspace:^"
     "@backstage/plugin-devtools-backend": "workspace:^"
     "@backstage/plugin-entity-feedback-backend": "workspace:^"

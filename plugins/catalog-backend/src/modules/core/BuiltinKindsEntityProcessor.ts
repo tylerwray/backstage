@@ -55,7 +55,10 @@ import {
   processingResult,
 } from '@backstage/plugin-catalog-node';
 
-/** @public */
+/**
+ * @public
+ * @deprecated Use `SystemEntityModelProcessor` from `@backstage/plugin-catalog-backend-module-system-entity-model` instead
+ */
 export class BuiltinKindsEntityProcessor implements CatalogProcessor {
   private readonly validators = [
     apiEntityV1alpha1Validator,
