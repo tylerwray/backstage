@@ -15,9 +15,11 @@
  */
 
 /**
- * The system-entity-model backend module for the catalog plugin.
+ * Implements the default System Entity Model for the catalog backend.
  *
  * @packageDocumentation
+ * @see https://backstage.io/docs/features/software-catalog/descriptor-format
  */
 
 export { catalogModuleSystemEntityModel as default } from './module';
+export * from './processor';

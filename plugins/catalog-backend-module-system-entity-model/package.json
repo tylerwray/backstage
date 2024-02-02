@@ -24,7 +24,10 @@
   },
   "dependencies": {
     "@backstage/backend-common": "workspace:^",
-    "@backstage/backend-plugin-api": "workspace:^"
+    "@backstage/backend-plugin-api": "workspace:^",
+    "@backstage/catalog-model": "workspace:^",
+    "@backstage/plugin-catalog-common": "workspace:^",
+    "@backstage/plugin-catalog-node": "workspace:^"
   },
   "devDependencies": {
     "@backstage/backend-test-utils": "workspace:^",

@@ -5668,7 +5668,10 @@ __metadata:
     "@backstage/backend-common": "workspace:^"
     "@backstage/backend-plugin-api": "workspace:^"
     "@backstage/backend-test-utils": "workspace:^"
+    "@backstage/catalog-model": "workspace:^"
     "@backstage/cli": "workspace:^"
+    "@backstage/plugin-catalog-common": "workspace:^"
+    "@backstage/plugin-catalog-node": "workspace:^"
   languageName: unknown
   linkType: soft
 

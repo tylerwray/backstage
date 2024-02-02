@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  coreServices,
-  createBackendModule,
-} from '@backstage/backend-plugin-api';
 
+import { createBackendModule } from '@backstage/backend-plugin-api';
+import { catalogProcessingExtensionPoint } from '@backstage/plugin-catalog-node/alpha';
+import { SystemEntityModelProcessor } from './processor';
+
+/**
+ * Implements the default System Entity Model for the catalog backend.
+ *
+ * @see https://backstage.io/docs/features/software-catalog/descriptor-format
+ * @public
+ */
 export const catalogModuleSystemEntityModel = createBackendModule({
   pluginId: 'catalog',
   moduleId: 'system-entity-model',
   register(reg) {
     reg.registerInit({
-      deps: { logger: coreServices.logger },
-      async init({ logger }) {
-        logger.info('Hello World!');
+      deps: {
+        processing: catalogProcessingExtensionPoint,
+      },
+      async init({ processing }) {
+        processing.addProcessor(new SystemEntityModelProcessor());
       },
     });
   },
