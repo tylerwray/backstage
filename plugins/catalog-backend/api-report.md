@@ -54,6 +54,7 @@ import { PluginTaskScheduler } from '@backstage/backend-tasks';
 import { Router } from 'express';
 import { ScmIntegrationRegistry } from '@backstage/integration';
 import { ScmLocationAnalyzer as ScmLocationAnalyzer_2 } from '@backstage/plugin-catalog-node';
+import { SystemEntityModelProcessor } from '@backstage/plugin-catalog-backend-module-system-entity-model';
 import { TokenManager } from '@backstage/backend-common';
 import { UrlReader } from '@backstage/backend-common';
 import { Validators } from '@backstage/catalog-model';
@@ -110,18 +111,7 @@ export class AnnotateScmSlugEntityProcessor implements CatalogProcessor_2 {
 }
 
 // @public @deprecated (undocumented)
-export class BuiltinKindsEntityProcessor implements CatalogProcessor_2 {
-  // (undocumented)
-  getProcessorName(): string;
-  // (undocumented)
-  postProcessEntity(
-    entity: Entity,
-    _location: LocationSpec_2,
-    emit: CatalogProcessorEmit_2,
-  ): Promise<Entity>;
-  // (undocumented)
-  validateEntityKind(entity: Entity): Promise<boolean>;
-}
+export const BuiltinKindsEntityProcessor: typeof SystemEntityModelProcessor;
 
 // @public (undocumented)
 export const CATALOG_CONFLICTS_TOPIC = 'experimental.catalog.conflict';

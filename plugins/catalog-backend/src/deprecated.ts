@@ -39,8 +39,7 @@ import {
   type ScmLocationAnalyzer as _ScmLocationAnalyzer,
 } from '@backstage/plugin-catalog-node';
 import { type LocationSpec as _LocationSpec } from '@backstage/plugin-catalog-common';
-
-export { BuiltinKindsEntityProcessor } from './modules';
+import { SystemEntityModelProcessor } from '@backstage/plugin-catalog-backend-module-system-entity-model';
 
 /**
  * @public
@@ -167,3 +166,8 @@ export type AnalyzeOptions = _AnalyzeOptions;
  * @deprecated import from `@backstage/plugin-catalog-node` instead
  */
 export type ScmLocationAnalyzer = _ScmLocationAnalyzer;
+/**
+ * @public
+ * @deprecated Use `SystemEntityModelProcessor` from `@backstage/plugin-catalog-backend-module-system-entity-model` instead
+ */
+export const BuiltinKindsEntityProcessor = SystemEntityModelProcessor;
