@@ -382,6 +382,18 @@ router.get(
 
 The existing `IdentityService` and `TokenManagerService` will be deprecated and instead implemented in terms of the new `AuthService`.
 
+The new `AuthService`, `HttpAuthService`, and `UserInfoService` will all need backwards compatible implementations for the old backend system. The plan is to not apply any access restrictions for the old Backend system, only implementing that in the new system. The backwards compatibility helpers will use the provided `identity` and `tokenManager` services if available, and plugins should provide fallbacks in the same way as they currently do. If these are not provided, the `identity` client will fall back to `DefaultIdentityClient`, and `tokenManager` will fall back `ServicerTokenManager.noop()`.
+
+The backwards compatibility helpers will have the following behavior for each individual service call:
+
+- `auth.authenticate(token)`: If the decoded token has the `backstage` audience, authenticate the token for a user principal using `identity.getIdentity(...)`, otherwise if the subject is `backstage-server` authenticate using `tokenManager.authenticate(...)` as a service principal with the subject `external:backstage-plugin`.
+- `auth.issueServiceToken(options)`: Same behavior as the original implementation, using the `tokenManager` to issue service tokens.
+- `httpAuth.credentials(...)`: Use original implementation.
+- `httpAuth.requestHeaders(...)`: Use original implementation.
+- `httpAuth.issueUserCookie(...)`: Use original implementation.
+
+The `HttpRouterService` does not need a backwards compatibility layer, since it is not used at all in the old backend system.
+
 The release plan for the `HttpAuthService` is TBD, but is likely to be shipped as a no-op for plugins using the old backend system. The goal is for all plugins using the new backend system to have endpoint security be opt-out, which will be a breaking change.
 
 ### Implementation Tasks

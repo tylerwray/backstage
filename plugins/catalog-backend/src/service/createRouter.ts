@@ -126,9 +126,7 @@ export async function createRouter(
           fields: parseEntityTransformParams(req.query),
           order: parseEntityOrderParams(req.query),
           pagination: parseEntityPaginationParams(req.query),
-          authorizationToken: getBearerTokenFromAuthorizationHeader(
-            req.header('authorization'),
-          ),
+          credentials: await httpAuth.credentials(req),
         });
 
         // Add a Link header to the next page

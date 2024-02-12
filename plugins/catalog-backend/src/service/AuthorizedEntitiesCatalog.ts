@@ -53,7 +53,11 @@ export class AuthorizedEntitiesCatalog implements EntitiesCatalog {
     const authorizeDecision = (
       await this.permissionApi.authorizeConditional(
         [{ permission: catalogEntityReadPermission }],
-        { token: request?.authorizationToken },
+        {
+          token:
+            request?.authorizationToken &&
+            auth.issueServiceToken(request?.credentials),
+        },
       )
     )[0];
 

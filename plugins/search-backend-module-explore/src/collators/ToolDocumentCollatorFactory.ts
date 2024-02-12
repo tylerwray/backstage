@@ -17,7 +17,9 @@
 import {
   PluginEndpointDiscovery,
   TokenManager,
+  authCompat,
 } from '@backstage/backend-common';
+import { AuthService, HttpAuthService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { ExploreTool } from '@backstage/plugin-explore-common';
 import {
@@ -44,6 +46,8 @@ export type ToolDocumentCollatorFactoryOptions = {
   discovery: PluginEndpointDiscovery;
   logger: Logger;
   tokenManager?: TokenManager;
+  auth?: AuthService;
+  httpAuth?: HttpAuthService;
 };
 
 /**
@@ -56,12 +60,16 @@ export class ToolDocumentCollatorFactory implements DocumentCollatorFactory {
 
   private readonly discovery: PluginEndpointDiscovery;
   private readonly logger: Logger;
-  private readonly tokenManager?: TokenManager;
+  private readonly auth: AuthService;
+  private readonly httpAuth: HttpAuthService;
 
   private constructor(options: ToolDocumentCollatorFactoryOptions) {
     this.discovery = options.discovery;
     this.logger = options.logger;
-    this.tokenManager = options.tokenManager;
+
+    const { auth, httpAuth } = authCompat(options);
+    this.auth = auth;
+    this.httpAuth = httpAuth;
   }
 
   static fromConfig(
@@ -94,16 +102,11 @@ export class ToolDocumentCollatorFactory implements DocumentCollatorFactory {
   private async fetchTools() {
     const baseUrl = await this.discovery.getBaseUrl('explore');
 
-    let headers = {};
-
-    if (this.tokenManager) {
-      const { token } = await this.tokenManager.getToken();
-      headers = {
-        Authorization: `Bearer ${token}`,
-      };
-    }
-
-    const response = await fetch(`${baseUrl}/tools`, headers);
+    const response = await fetch(`${baseUrl}/tools`, {
+      headers: await this.httpAuth.requestHeaders({
+        forward: await this.auth.getOwnCredentials(),
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(

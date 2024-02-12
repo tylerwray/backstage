@@ -83,6 +83,24 @@ export class ServerPermissionClient implements PermissionEvaluator {
     queries: QueryPermissionRequest[],
     options?: EvaluatorRequestOptions,
   ): Promise<PolicyDecision[]> {
+    // if (!this.permissionEnabled) {
+    //   return queries.map(_ => ({ result: AuthorizeResult.ALLOW }));
+    // }
+
+    // if (auth.isPrincipal(options.credentials, 'service')) {
+    //   return queries.map(_ => ({ result: AuthorizeResult.ALLOW }));
+    // }
+    // if (auth.isPrincipal(options.credentials, 'none')) {
+    //   return this.permissionClient.authorizeConditional(queries);
+    // }
+
+    // return this.permissionClient.authorizeConditional(queries, {
+    //   token: auth.issueServiceToken({
+    //     // This would throw if the credentials principal is 'none'
+    //     forward: options.credentials,
+    //   }),
+    // });
+
     return (await this.isEnabled(options?.token))
       ? this.permissionClient.authorizeConditional(queries, options)
       : queries.map(_ => ({ result: AuthorizeResult.ALLOW }));
