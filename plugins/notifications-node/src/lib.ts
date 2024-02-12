@@ -29,12 +29,16 @@ export const notificationService = createServiceRef<NotificationService>({
     createServiceFactory({
       service,
       deps: {
+        auth: coreServices.auth,
+        httpAuth: coreServices.httpAuth,
         discovery: coreServices.discovery,
         tokenManager: coreServices.tokenManager,
         pluginMetadata: coreServices.pluginMetadata,
       },
-      factory({ discovery, tokenManager, pluginMetadata }) {
+      factory({ auth, httpAuth, discovery, tokenManager, pluginMetadata }) {
         return DefaultNotificationService.create({
+          auth,
+          httpAuth,
           discovery,
           tokenManager,
           pluginId: pluginMetadata.getId(),

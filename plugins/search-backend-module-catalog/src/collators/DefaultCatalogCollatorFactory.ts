@@ -33,9 +33,12 @@ import { Readable } from 'stream';
 import { CatalogCollatorEntityTransformer } from './CatalogCollatorEntityTransformer';
 import { readCollatorConfigOptions } from './config';
 import { defaultCatalogCollatorEntityTransformer } from './defaultCatalogCollatorEntityTransformer';
+import { AuthService, HttpAuthService } from '@backstage/backend-plugin-api';
 
 /** @public */
 export type DefaultCatalogCollatorFactoryOptions = {
+  auth: AuthService;
+  httpAuth: HttpAuthService;
   discovery: PluginEndpointDiscovery;
   tokenManager: TokenManager;
   /**
@@ -80,6 +83,8 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
   ) {
     const configOptions = readCollatorConfigOptions(configRoot);
     return new DefaultCatalogCollatorFactory({
+      auth: options.auth,
+      httpAuth: options.httpAuth,
       locationTemplate:
         options.locationTemplate ?? configOptions.locationTemplate,
       filter: options.filter ?? configOptions.filter,

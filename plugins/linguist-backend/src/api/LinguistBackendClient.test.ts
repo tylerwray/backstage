@@ -15,6 +15,7 @@
  */
 
 import {
+  createLegacyAuthAdapters,
   getVoidLogger,
   ReadTreeResponse,
   ServerTokenManager,
@@ -97,13 +98,11 @@ describe('Linguist backend API', () => {
     getEntityByRef: jest.fn(),
   } as any;
 
-  const tokenManager = ServerTokenManager.noop();
-
   const api = new LinguistBackendClient(
     logger,
     store,
     urlReader,
-    tokenManager,
+    auth,
     catalogApi,
   );
 
@@ -230,7 +229,7 @@ describe('Linguist backend API', () => {
       logger,
       store,
       urlReader,
-      tokenManager,
+      auth,
       catalogApi,
       { days: 5 },
     );

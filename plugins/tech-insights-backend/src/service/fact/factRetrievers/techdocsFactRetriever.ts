@@ -43,12 +43,10 @@ export const techdocsFactRetriever: FactRetriever = {
       description: 'The entity has a TechDocs reference annotation',
     },
   },
-  handler: async ({
-    discovery,
-    entityFilter,
-    tokenManager,
-  }: FactRetrieverContext) => {
-    const { token } = await tokenManager.getToken();
+  handler: async ({ discovery, entityFilter, auth }: FactRetrieverContext) => {
+    const { token } = await auth.issueServiceToken({
+      forward: await auth.getOwnCredentials(),
+    });
     const catalogClient = new CatalogClient({
       discoveryApi: discovery,
     });

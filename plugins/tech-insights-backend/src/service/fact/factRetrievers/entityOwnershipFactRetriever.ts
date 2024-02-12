@@ -45,12 +45,10 @@ export const entityOwnershipFactRetriever: FactRetriever = {
       description: 'The spec.owner field is set and refers to a group',
     },
   },
-  handler: async ({
-    discovery,
-    entityFilter,
-    tokenManager,
-  }: FactRetrieverContext) => {
-    const { token } = await tokenManager.getToken();
+  handler: async ({ discovery, entityFilter, auth }: FactRetrieverContext) => {
+    const { token } = await auth.issueServiceToken({
+      forward: await auth.getOwnCredentials(),
+    });
     const catalogClient = new CatalogClient({
       discoveryApi: discovery,
     });

@@ -264,7 +264,10 @@ export async function createRouter(
       async (req, _res, next) => {
         const { kind, namespace, name } = req.params;
         const entityName = { kind, namespace, name };
-        const token = getBearerToken(req.headers.authorization);
+
+        const token = await auth.issueServiceToken({
+          forward: await httpAuth.credentials(req),
+        });
 
         const entity = await entityLoader.load(entityName, token);
 

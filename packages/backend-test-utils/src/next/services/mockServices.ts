@@ -23,6 +23,13 @@ import {
   ServiceFactory,
   ServiceRef,
   TokenManagerService,
+  BackstageCredentials,
+  AuthService,
+  HttpAuthService,
+  BackstageServicePrincipal,
+  BackstagePrincipalTypes,
+  BackstageUserPrincipal,
+  BackstageNonePrincipal,
 } from '@backstage/backend-plugin-api';
 import {
   cacheServiceFactory,
@@ -35,11 +42,14 @@ import {
   rootLifecycleServiceFactory,
   schedulerServiceFactory,
   urlReaderServiceFactory,
+  authServiceFactory,
+  httpAuthServiceFactory,
 } from '@backstage/backend-app-api';
 import { ConfigReader } from '@backstage/config';
 import { JsonObject } from '@backstage/types';
 import { MockIdentityService } from './MockIdentityService';
 import { MockRootLoggerService } from './MockRootLoggerService';
+import { AuthenticationError } from '@backstage/errors';
 
 /** @internal */
 function simpleFactory<
@@ -160,9 +170,106 @@ export namespace mockServices {
     }));
   }
 
+  export function auth(): AuthService {
+    return {
+      async authenticate(token: string): Promise<BackstageCredentials> {
+        if (token === 'mock-user-token') {
+          return {
+            $$type: '@backstage/BackstageCredentials',
+            principal: { type: 'user', userEntityRef: 'user:default/mock' },
+          };
+        } else if (token === 'mock-service-token') {
+          return {
+            $$type: '@backstage/BackstageCredentials',
+            principal: { type: 'service', subject: 'external:test-service' },
+          };
+        }
+
+        throw new AuthenticationError('Invalid token');
+      },
+
+      async getOwnCredentials(): Promise<
+        BackstageCredentials<BackstageServicePrincipal>
+      > {
+        return {
+          $$type: '@backstage/BackstageCredentials',
+          principal: { type: 'service', subject: 'plugin:test' },
+        };
+      },
+
+      isPrincipal<TType extends keyof BackstagePrincipalTypes>(
+        credentials: BackstageCredentials,
+        type: TType,
+      ): credentials is BackstageCredentials<BackstagePrincipalTypes[TType]> {
+        const principal = credentials.principal as
+          | BackstageUserPrincipal
+          | BackstageServicePrincipal
+          | BackstageNonePrincipal;
+        if (principal.type !== type) {
+          return false;
+        }
+
+        return true;
+      },
+
+      async issueServiceToken(options: {
+        forward: BackstageCredentials;
+      }): Promise<{ token: string }> {
+        const principal = options.forward.principal as
+          | BackstageUserPrincipal
+          | BackstageServicePrincipal
+          | BackstageNonePrincipal;
+
+        switch (principal.type) {
+          case 'user':
+            return { token: 'mock-user-token' };
+          case 'service':
+            return { token: 'mock-service-token' };
+          default:
+            throw new AuthenticationError(
+              `Refused to issue service token for credential type '${type}'`,
+            );
+        }
+      },
+    };
+  }
+
+  export function httpAuth(): HttpAuthService {
+    return {
+      credentials<TAllowed extends keyof BackstagePrincipalTypes = 'unknown'>(
+        req: Request,
+        options?: {
+          allow?: Array<TAllowed>;
+          allowedAuthMethods?: Array<'token' | 'cookie'>;
+        },
+      ): Promise<BackstageCredentials<BackstagePrincipalTypes[TAllowed]>> {
+        return 0 as any;
+      },
+      async requestHeaders(options: {
+        forward: BackstageCredentials;
+      }): Promise<Record<string, string>> {
+        return {
+          Authorization: `Bearer ${await this.auth.issueServiceToken(options)}`,
+        };
+      },
+      async issueUserCookie(res: Response): Promise<void> {
+        // TODO
+      },
+    };
+  }
+
   // TODO(Rugvip): Not all core services have implementations available here yet.
   //               some may need a bit more refactoring for it to be simpler to
   //               re-implement functioning mock versions here.
+  export namespace auth {
+    export const factory = simpleFactory(coreServices.auth, auth);
+    export const mock = simpleMock(coreServices.auth, () => ({
+      authenticate: jest.fn(),
+      getOwnCredentials: jest.fn(),
+      isPrincipal: jest.fn() as any,
+      issueServiceToken: jest.fn(),
+    }));
+  }
   export namespace cache {
     export const factory = cacheServiceFactory;
     export const mock = simpleMock(coreServices.cache, () => ({
@@ -183,6 +290,14 @@ export namespace mockServices {
     export const mock = simpleMock(coreServices.httpRouter, () => ({
       use: jest.fn(),
       addAuthPolicy: jest.fn(),
+    }));
+  }
+  export namespace httpAuth {
+    export const factory = httpAuthServiceFactory;
+    export const mock = simpleMock(coreServices.httpAuth, () => ({
+      credentials: jest.fn(),
+      issueUserCookie: jest.fn(),
+      requestHeaders: jest.fn(),
     }));
   }
   export namespace rootHttpRouter {

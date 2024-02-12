@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 import {
+  createLegacyAuthAdapters,
   errorHandler,
   PluginDatabaseManager,
   TokenManager,
 } from '@backstage/backend-common';
 import express, { Request } from 'express';
 import Router from 'express-promise-router';
-import {
-  getBearerTokenFromAuthorizationHeader,
-  IdentityApi,
-} from '@backstage/plugin-auth-node';
+import { IdentityApi } from '@backstage/plugin-auth-node';
 import {
   DatabaseNotificationsStore,
   NotificationGetOptions,
@@ -39,7 +37,12 @@ import {
 } from '@backstage/catalog-model';
 import { NotificationProcessor } from '@backstage/plugin-notifications-node';
 import { AuthenticationError, InputError } from '@backstage/errors';
-import { DiscoveryService, LoggerService } from '@backstage/backend-plugin-api';
+import {
+  AuthService,
+  DiscoveryService,
+  HttpAuthService,
+  LoggerService,
+} from '@backstage/backend-plugin-api';
 import { SignalService } from '@backstage/plugin-signals-node';
 import {
   Notification,
@@ -56,6 +59,8 @@ export interface RouterOptions {
   signalService?: SignalService;
   catalog?: CatalogApi;
   processors?: NotificationProcessor[];
+  auth?: AuthService;
+  httpAuth?: HttpAuthService;
 }
 
 /** @internal */
@@ -63,6 +68,8 @@ export async function createRouter(
   options: RouterOptions,
 ): Promise<express.Router> {
   const {
+    auth,
+    httpAuth,
     logger,
     database,
     identity,
@@ -77,6 +84,13 @@ export async function createRouter(
     catalog ?? new CatalogClient({ discoveryApi: discovery });
   const store = await DatabaseNotificationsStore.create({ database });
 
+  const { httpAuth: adaptedHttpAuth } = createLegacyAuthAdapters({
+    auth,
+    httpAuth,
+    discovery,
+    tokenManager,
+  });
+
   const getUser = async (req: Request<unknown>) => {
     const user = await identity.getIdentity({ request: req });
     if (!user) {
@@ -85,14 +99,10 @@ export async function createRouter(
     return user.identity.userEntityRef;
   };
 
-  const authenticateService = async (req: Request<unknown>) => {
-    const token = getBearerTokenFromAuthorizationHeader(
-      req.header('authorization'),
-    );
-    if (!token) {
-      throw new AuthenticationError();
-    }
-    await tokenManager.authenticate(token);
+  const authenticateService = async (req: Request) => {
+    await adaptedHttpAuth.credentials(req, {
+      allow: ['service'],
+    });
   };
 
   const getUsersForEntityRef = async (

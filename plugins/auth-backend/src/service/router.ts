@@ -165,6 +165,7 @@ export async function createRouter(
               catalogApi ?? new CatalogClient({ discoveryApi: discovery }),
             tokenIssuer,
             tokenManager,
+            discovery,
           }),
         });
 

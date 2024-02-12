@@ -31,14 +31,18 @@ import {
 import {
   PluginEndpointDiscovery,
   TokenManager,
+  createLegacyAuthAdapters,
 } from '@backstage/backend-common';
 import { Config } from '@backstage/config';
+import { AuthService, HttpAuthService } from '@backstage/backend-plugin-api';
 
 /** @public */
 export type GithubLocationAnalyzerOptions = {
   config: Config;
   discovery: PluginEndpointDiscovery;
-  tokenManager: TokenManager;
+  tokenManager?: TokenManager;
+  auth?: AuthService;
+  httpAuth?: HttpAuthService;
   githubCredentialsProvider?: GithubCredentialsProvider;
 };
 
@@ -47,7 +51,7 @@ export class GithubLocationAnalyzer implements ScmLocationAnalyzer {
   private readonly catalogClient: CatalogApi;
   private readonly githubCredentialsProvider: GithubCredentialsProvider;
   private readonly integrations: ScmIntegrationRegistry;
-  private readonly tokenManager: TokenManager;
+  private readonly auth: AuthService;
 
   constructor(options: GithubLocationAnalyzerOptions) {
     this.catalogClient = new CatalogClient({ discoveryApi: options.discovery });
@@ -55,7 +59,13 @@ export class GithubLocationAnalyzer implements ScmLocationAnalyzer {
     this.githubCredentialsProvider =
       options.githubCredentialsProvider ||
       DefaultGithubCredentialsProvider.fromIntegrations(this.integrations);
-    this.tokenManager = options.tokenManager;
+    const { auth } = createLegacyAuthAdapters({
+      auth: options.auth,
+      httpAuth: options.httpAuth,
+      discovery: options.discovery,
+      tokenManager: options.tokenManager,
+    });
+    this.auth = auth;
   }
 
   supports(url: string) {
@@ -101,7 +111,9 @@ export class GithubLocationAnalyzer implements ScmLocationAnalyzer {
         });
       const defaultBranch = repoInformation.data.default_branch;
 
-      const { token: serviceToken } = await this.tokenManager.getToken();
+      const { token: serviceToken } = await this.auth.issueServiceToken({
+        forward: await this.auth.getOwnCredentials(),
+      });
 
       const result = await Promise.all(
         searchResult.data.items

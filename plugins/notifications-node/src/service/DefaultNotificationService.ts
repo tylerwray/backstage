@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenManager } from '@backstage/backend-common';
+import {
+  TokenManager,
+  createLegacyAuthAdapters,
+} from '@backstage/backend-common';
 import { NotificationService } from './NotificationService';
-import { DiscoveryService } from '@backstage/backend-plugin-api';
+import {
+  AuthService,
+  DiscoveryService,
+  HttpAuthService,
+} from '@backstage/backend-plugin-api';
 import { NotificationPayload } from '@backstage/plugin-notifications-common';
 
 /** @public */
 export type NotificationServiceOptions = {
   discovery: DiscoveryService;
+  auth?: AuthService;
+  httpAuth?: HttpAuthService;
   tokenManager: TokenManager;
   pluginId: string;
 };
@@ -44,22 +53,32 @@ export type NotificationSendOptions = {
 export class DefaultNotificationService implements NotificationService {
   private constructor(
     private readonly discovery: DiscoveryService,
-    private readonly tokenManager: TokenManager,
+    private readonly auth: AuthService,
     private readonly pluginId: string,
   ) {}
 
   static create({
-    tokenManager,
     discovery,
+    tokenManager,
+    auth,
+    httpAuth,
     pluginId,
   }: NotificationServiceOptions): DefaultNotificationService {
-    return new DefaultNotificationService(discovery, tokenManager, pluginId);
+    const { auth: adaptedAuth } = createLegacyAuthAdapters({
+      discovery,
+      tokenManager,
+      auth,
+      httpAuth,
+    });
+    return new DefaultNotificationService(discovery, adaptedAuth, pluginId);
   }
 
   async send(notification: NotificationSendOptions): Promise<void> {
     try {
       const baseUrl = await this.discovery.getBaseUrl('notifications');
-      const { token } = await this.tokenManager.getToken();
+      const { token } = await this.auth.issueServiceToken({
+        forward: await this.auth.getOwnCredentials(),
+      });
       const response = await fetch(`${baseUrl}/`, {
         method: 'POST',
         body: JSON.stringify({
