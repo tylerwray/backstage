@@ -28,11 +28,10 @@ import { IdentityApi } from '@backstage/plugin-auth-node';
 import { PermissionEvaluator } from '@backstage/plugin-permission-common';
 import { EventBroker } from '@backstage/plugin-events-node';
 import { SignalService } from '@backstage/plugin-signals-node';
-import { AuthService, HttpAuthService } from '@backstage/backend-plugin-api';
+import { AuthService } from '@backstage/backend-plugin-api';
 
 export type PluginEnvironment = {
   auth: AuthService;
-  httpAuth: HttpAuthService;
   logger: Logger;
   cache: PluginCacheManager;
   database: PluginDatabaseManager;

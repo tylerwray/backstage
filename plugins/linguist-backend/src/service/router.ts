@@ -67,16 +67,8 @@ export async function createRouter(
   pluginOptions: PluginOptions,
   routerOptions: RouterOptions,
 ): Promise<express.Router> {
-  const {
-    logger,
-    reader,
-    database,
-    discovery,
-    scheduler,
-    tokenManager,
-    auth,
-    httpAuth,
-  } = routerOptions;
+  const { logger, reader, database, discovery, scheduler, tokenManager, auth } =
+    routerOptions;
 
   const {
     schedule,
@@ -95,7 +87,6 @@ export async function createRouter(
 
   const { auth: adaptedAuth } = createLegacyAuthAdapters({
     auth,
-    httpAuth,
     tokenManager: tokenManager,
     discovery: discovery,
   });

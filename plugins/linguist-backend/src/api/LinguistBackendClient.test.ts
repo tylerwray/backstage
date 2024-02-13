@@ -15,10 +15,8 @@
  */
 
 import {
-  createLegacyAuthAdapters,
   getVoidLogger,
   ReadTreeResponse,
-  ServerTokenManager,
   UrlReader,
 } from '@backstage/backend-common';
 import { CatalogApi, GetEntitiesResponse } from '@backstage/catalog-client';

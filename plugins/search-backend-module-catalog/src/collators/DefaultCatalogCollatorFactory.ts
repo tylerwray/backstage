@@ -34,12 +34,11 @@ import { Readable } from 'stream';
 import { CatalogCollatorEntityTransformer } from './CatalogCollatorEntityTransformer';
 import { readCollatorConfigOptions } from './config';
 import { defaultCatalogCollatorEntityTransformer } from './defaultCatalogCollatorEntityTransformer';
-import { AuthService, HttpAuthService } from '@backstage/backend-plugin-api';
+import { AuthService } from '@backstage/backend-plugin-api';
 
 /** @public */
 export type DefaultCatalogCollatorFactoryOptions = {
   auth?: AuthService;
-  httpAuth?: HttpAuthService;
   discovery: PluginEndpointDiscovery;
   tokenManager: TokenManager;
   /**
@@ -83,14 +82,18 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
     options: DefaultCatalogCollatorFactoryOptions,
   ) {
     const configOptions = readCollatorConfigOptions(configRoot);
+    const { auth: adaptedAuth } = createLegacyAuthAdapters({
+      auth: options.auth,
+      discovery: options.discovery,
+      tokenManager: options.tokenManager,
+    });
     return new DefaultCatalogCollatorFactory({
       locationTemplate:
         options.locationTemplate ?? configOptions.locationTemplate,
       filter: options.filter ?? configOptions.filter,
       batchSize: options.batchSize ?? configOptions.batchSize,
       entityTransformer: options.entityTransformer,
-      auth: options.auth,
-      httpAuth: options.httpAuth,
+      auth: adaptedAuth,
       discovery: options.discovery,
       tokenManager: options.tokenManager,
       catalogClient: options.catalogClient,
@@ -102,21 +105,18 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
     filter: GetEntitiesRequest['filter'];
     batchSize: number;
     entityTransformer?: CatalogCollatorEntityTransformer;
-    auth?: AuthService;
-    httpAuth?: HttpAuthService;
+    auth: AuthService;
     discovery: PluginEndpointDiscovery;
     tokenManager: TokenManager;
     catalogClient?: CatalogApi;
   }) {
     const {
       auth,
-      httpAuth,
       batchSize,
       discovery,
       locationTemplate,
       filter,
       catalogClient,
-      tokenManager,
       entityTransformer,
     } = options;
 
@@ -127,14 +127,7 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
       catalogClient || new CatalogClient({ discoveryApi: discovery });
     this.entityTransformer =
       entityTransformer ?? defaultCatalogCollatorEntityTransformer;
-
-    const { auth: adaptedAuth } = createLegacyAuthAdapters({
-      auth,
-      httpAuth,
-      discovery,
-      tokenManager,
-    });
-    this.auth = adaptedAuth;
+    this.auth = auth;
   }
 
   async getCollator(): Promise<Readable> {

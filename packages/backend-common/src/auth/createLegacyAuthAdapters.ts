@@ -210,8 +210,50 @@ class HttpAuthCompat implements HttpAuthService {
   async issueUserCookie(_res: Response): Promise<void> {}
 }
 
-/** @public */
-export function createLegacyAuthAdapters(options: {
+type LegacyAdapter = 'auth' | 'httpAuth';
+type AdapterTypes = {
+  auth: AuthService;
+  httpAuth: HttpAuthService;
+};
+
+// TODO Is this more resonable? Intention baked into the function name
+export function createLegacyAuthServiceAdapter(options: {
+  auth?: AuthService;
+  identity?: IdentityService;
+  tokenManager?: TokenManager;
+  discovery: PluginEndpointDiscovery;
+}): AuthService {
+  const { auth, discovery } = options;
+
+  if (auth) {
+    return auth;
+  }
+
+  const identity =
+    options.identity ?? DefaultIdentityClient.create({ discovery });
+  const tokenManager = options.tokenManager ?? ServerTokenManager.noop();
+
+  return new AuthCompat(identity, tokenManager);
+}
+
+// TODO Is this more resonable? Intention baked into the function name
+export function createLegacyHttpAuthServiceAdapter(options: {
+  httpAuth?: HttpAuthService;
+  identity?: IdentityService;
+  tokenManager?: TokenManager;
+  discovery: PluginEndpointDiscovery;
+}): HttpAuthService {
+  const { httpAuth } = options;
+
+  if (httpAuth) {
+    return httpAuth;
+  }
+
+  const authImpl = createLegacyAuthServiceAdapter(options);
+  return new HttpAuthCompat(authImpl);
+}
+
+export function createLegacyAuthAdapters3(options: {
   auth?: AuthService;
   httpAuth?: HttpAuthService;
   identity?: IdentityService;
@@ -221,18 +263,30 @@ export function createLegacyAuthAdapters(options: {
   auth: AuthService;
   httpAuth: HttpAuthService;
 } {
+  return {
+    auth: options.auth ?? createLegacyAuthServiceAdapter(options),
+    httpAuth: options.httpAuth ?? createLegacyHttpAuthServiceAdapter(options),
+  };
+}
+
+// TODO or should we allow that you pass in which adapters you want into a single function?
+// why would anyone remember pass in `adapters` here?
+// This creates a potential disconnect between options and adapters.
+export function createLegacyAuthAdapters2<
+  Options extends {
+    auth?: AuthService;
+    httpAuth?: HttpAuthService;
+    identity?: IdentityService;
+    tokenManager?: TokenManager;
+    discovery: PluginEndpointDiscovery;
+  },
+  Adapters extends [LegacyAdapter, ...LegacyAdapter[]],
+  AdaptedAuth = { [P in Adapters[number]]: AdapterTypes[P] },
+>(options: Options, adapters?: Adapters): AdaptedAuth {
   const { auth, httpAuth, discovery } = options;
 
-  if (auth || httpAuth) {
-    // TODO: Is this sensible? Could be that a lot of plugins only want one of them and in
-    // that case overloads might be better, so that it's possible to only provide one of them.
-    if (!(auth && httpAuth)) {
-      throw new Error('Both auth and httpAuth must be provided');
-    }
-    return {
-      auth,
-      httpAuth,
-    };
+  if (auth && httpAuth) {
+    return { auth, httpAuth } as AdaptedAuth;
   }
 
   const identity =
@@ -240,10 +294,77 @@ export function createLegacyAuthAdapters(options: {
   const tokenManager = options.tokenManager ?? ServerTokenManager.noop();
 
   const authImpl = new AuthCompat(identity, tokenManager);
+
+  if (adapters && !adapters.includes('httpAuth')) {
+    return { auth: authImpl } as AdaptedAuth;
+  }
+
   const httpAuthImpl = new HttpAuthCompat(authImpl);
 
   return {
     auth: authImpl,
     httpAuth: httpAuthImpl,
-  };
+  } as AdaptedAuth;
+}
+
+// TODO Using the passing of properties as an implicit indication
+// of which services you want adapter (undefined or not).
+// This creates problems when you pass { httpAuth: potentiallyUndefined }
+// and expect only { httpAuth } back.
+/** @public */
+export function createLegacyAuthAdapters<
+  Options extends {
+    auth?: AuthService;
+    httpAuth?: HttpAuthService;
+    identity?: IdentityService;
+    tokenManager?: TokenManager;
+    discovery: PluginEndpointDiscovery;
+  },
+  Adapters = Options extends {
+    auth?: AuthService;
+  }
+    ? Options extends { httpAuth?: HttpAuthService }
+      ? { auth: AuthService; httpAuth: HttpAuthService }
+      : { auth: AuthService }
+    : Options extends { httpAuth?: HttpAuthService }
+    ? { httpAuth: HttpAuthService }
+    : never,
+>(options: Options): Adapters {
+  const { auth, httpAuth, discovery } = options;
+
+  if (auth && httpAuth) {
+    return {
+      auth,
+      httpAuth,
+    } as Adapters;
+  }
+
+  if (auth) {
+    return {
+      auth,
+    } as Adapters;
+  }
+
+  if (httpAuth) {
+    return {
+      httpAuth,
+    } as Adapters;
+  }
+
+  const identity =
+    options.identity ?? DefaultIdentityClient.create({ discovery });
+  const tokenManager = options.tokenManager ?? ServerTokenManager.noop();
+
+  const authImpl = new AuthCompat(identity, tokenManager);
+
+  if (!options.httpAuth) {
+    return { auth: authImpl } as Adapters;
+  }
+
+  const httpAuthImpl = new HttpAuthCompat(authImpl);
+
+  return {
+    auth: authImpl,
+    httpAuth: httpAuthImpl,
+  } as Adapters;
 }
