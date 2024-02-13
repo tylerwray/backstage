@@ -17,7 +17,7 @@
 import {
   PluginEndpointDiscovery,
   TokenManager,
-  authCompat,
+  createLegacyAuthAdapters,
 } from '@backstage/backend-common';
 import { AuthService, HttpAuthService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
@@ -67,7 +67,7 @@ export class ToolDocumentCollatorFactory implements DocumentCollatorFactory {
     this.discovery = options.discovery;
     this.logger = options.logger;
 
-    const { auth, httpAuth } = authCompat(options);
+    const { auth, httpAuth } = createLegacyAuthAdapters(options);
     this.auth = auth;
     this.httpAuth = httpAuth;
   }
