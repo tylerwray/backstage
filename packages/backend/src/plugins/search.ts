@@ -85,6 +85,8 @@ export default async function createPlugin(
   indexBuilder.addCollator({
     schedule,
     factory: DefaultCatalogCollatorFactory.fromConfig(env.config, {
+      auth: env.auth,
+      httpAuth: env.httpAuth,
       discovery: env.discovery,
       tokenManager: env.tokenManager,
     }),

@@ -27,9 +27,9 @@ import { NotificationPayload } from '@backstage/plugin-notifications-common';
 
 /** @public */
 export type NotificationServiceOptions = {
-  discovery: DiscoveryService;
   auth?: AuthService;
   httpAuth?: HttpAuthService;
+  discovery: DiscoveryService;
   tokenManager: TokenManager;
   pluginId: string;
 };
@@ -58,10 +58,10 @@ export class DefaultNotificationService implements NotificationService {
   ) {}
 
   static create({
-    discovery,
-    tokenManager,
     auth,
     httpAuth,
+    discovery,
+    tokenManager,
     pluginId,
   }: NotificationServiceOptions): DefaultNotificationService {
     const { auth: adaptedAuth } = createLegacyAuthAdapters({

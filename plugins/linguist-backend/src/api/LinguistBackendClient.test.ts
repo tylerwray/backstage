@@ -28,6 +28,7 @@ import { LinguistBackendStore } from '../db';
 import { kindOrDefault, LinguistBackendClient } from './LinguistBackendClient';
 import fs from 'fs-extra';
 import { LINGUIST_ANNOTATION } from '@backstage/plugin-linguist-common';
+import { mockServices } from '@backstage/backend-test-utils';
 
 const linguistResultMock = Promise.resolve({
   files: {
@@ -102,7 +103,7 @@ describe('Linguist backend API', () => {
     logger,
     store,
     urlReader,
-    auth,
+    mockServices.auth(),
     catalogApi,
   );
 
@@ -229,7 +230,7 @@ describe('Linguist backend API', () => {
       logger,
       store,
       urlReader,
-      auth,
+      mockServices.auth(),
       catalogApi,
       { days: 5 },
     );
@@ -352,7 +353,7 @@ describe('Linguist backend API', () => {
       logger,
       store,
       urlReader,
-      tokenManager,
+      mockServices.auth(),
       catalogApi,
       undefined,
       2,

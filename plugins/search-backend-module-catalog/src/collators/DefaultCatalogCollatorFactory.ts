@@ -17,6 +17,7 @@
 import {
   PluginEndpointDiscovery,
   TokenManager,
+  createLegacyAuthAdapters,
 } from '@backstage/backend-common';
 import {
   CatalogApi,
@@ -37,8 +38,8 @@ import { AuthService, HttpAuthService } from '@backstage/backend-plugin-api';
 
 /** @public */
 export type DefaultCatalogCollatorFactoryOptions = {
-  auth: AuthService;
-  httpAuth: HttpAuthService;
+  auth?: AuthService;
+  httpAuth?: HttpAuthService;
   discovery: PluginEndpointDiscovery;
   tokenManager: TokenManager;
   /**
@@ -74,8 +75,8 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
   private filter?: GetEntitiesRequest['filter'];
   private batchSize: number;
   private readonly catalogClient: CatalogApi;
-  private tokenManager: TokenManager;
   private entityTransformer: CatalogCollatorEntityTransformer;
+  private auth: AuthService;
 
   static fromConfig(
     configRoot: Config,
@@ -83,13 +84,13 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
   ) {
     const configOptions = readCollatorConfigOptions(configRoot);
     return new DefaultCatalogCollatorFactory({
-      auth: options.auth,
-      httpAuth: options.httpAuth,
       locationTemplate:
         options.locationTemplate ?? configOptions.locationTemplate,
       filter: options.filter ?? configOptions.filter,
       batchSize: options.batchSize ?? configOptions.batchSize,
       entityTransformer: options.entityTransformer,
+      auth: options.auth,
+      httpAuth: options.httpAuth,
       discovery: options.discovery,
       tokenManager: options.tokenManager,
       catalogClient: options.catalogClient,
@@ -101,11 +102,15 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
     filter: GetEntitiesRequest['filter'];
     batchSize: number;
     entityTransformer?: CatalogCollatorEntityTransformer;
+    auth?: AuthService;
+    httpAuth?: HttpAuthService;
     discovery: PluginEndpointDiscovery;
     tokenManager: TokenManager;
     catalogClient?: CatalogApi;
   }) {
     const {
+      auth,
+      httpAuth,
       batchSize,
       discovery,
       locationTemplate,
@@ -120,9 +125,16 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
     this.batchSize = batchSize;
     this.catalogClient =
       catalogClient || new CatalogClient({ discoveryApi: discovery });
-    this.tokenManager = tokenManager;
     this.entityTransformer =
       entityTransformer ?? defaultCatalogCollatorEntityTransformer;
+
+    const { auth: adaptedAuth } = createLegacyAuthAdapters({
+      auth,
+      httpAuth,
+      discovery,
+      tokenManager,
+    });
+    this.auth = adaptedAuth;
   }
 
   async getCollator(): Promise<Readable> {
@@ -130,7 +142,9 @@ export class DefaultCatalogCollatorFactory implements DocumentCollatorFactory {
   }
 
   private async *execute(): AsyncGenerator<CatalogEntityDocument> {
-    const { token } = await this.tokenManager.getToken();
+    const { token } = await this.auth.issueServiceToken({
+      forward: await this.auth.getOwnCredentials(),
+    });
     let entitiesRetrieved = 0;
     let moreEntitiesToGet = true;
 

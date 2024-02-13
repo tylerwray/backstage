@@ -40,7 +40,7 @@ import {
 import { assertError } from '@backstage/errors';
 import { HumanDuration } from '@backstage/types';
 import { Results } from 'linguist-js/dist/types';
-import { AuthService } from '@backstage/backend-plugin-api';
+import { type AuthService } from '@backstage/backend-plugin-api';
 
 /** @public */
 export interface LinguistBackendApi {
